@@ -1,0 +1,50 @@
+:root {
+    --transition-speed: 0.3s;
+  }
+  
+  :root[data-theme="light"] {
+    --bg-primary: #f8f9fa;
+    --bg-secondary: #ffffff;
+    --text-primary: #1a1a1a;
+    --text-secondary: #666666;
+    --primary-color: #2196f3;
+    --accent-color: #1976d2;
+    --nav-bg: rgba(255, 255, 255, 0.8);
+    --card-bg: #ffffff;
+    --hover-bg: rgba(0, 0, 0, 0.05);
+    --active-bg: rgba(33, 150, 243, 0.1);
+    --border-color: #e0e0e0;
+    --shadow-color: rgba(0, 0, 0, 0.1);
+    --chart-grid: #e0e0e0;
+    --positive-color: #4caf50;
+    --negative-color: #f44336;
+  }
+  
+  :root[data-theme="dark"] {
+    --bg-primary: #121212;
+    --bg-secondary: #1e1e1e;
+    --text-primary: #ffffff;
+    --text-secondary: #b0b0b0;
+    --primary-color: #90caf9;
+    --accent-color: #64b5f6;
+    --nav-bg: rgba(30, 30, 30, 0.8);
+    --card-bg: #2d2d2d;
+    --hover-bg: rgba(255, 255, 255, 0.05);
+    --active-bg: rgba(144, 202, 249, 0.1);
+    --border-color: #404040;
+    --shadow-color: rgba(0, 0, 0, 0.3);
+    --chart-grid: #404040;
+    --positive-color: #81c784;
+    --negative-color: #e57373;
+  }
+  
+  body {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    transition: background-color var(--transition-speed), color var(--transition-speed);
+  }
+  
+  .app {
+    min-height: 100vh;
+    background-color: var(--bg-primary);
+  }

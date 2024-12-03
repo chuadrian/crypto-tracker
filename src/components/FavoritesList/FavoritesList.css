@@ -1,0 +1,57 @@
+.favorites-list {
+    padding: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  
+  .no-favorites {
+    text-align: center;
+    padding: 4rem 2rem;
+    background: var(--card-bg);
+    border-radius: 12px;
+    box-shadow: 0 4px 6px var(--shadow-color);
+    margin: 2rem auto;
+    max-width: 600px;
+  }
+  
+  .no-favorites h2 {
+    color: var(--text-primary);
+    margin-bottom: 1rem;
+  }
+  
+  .no-favorites p {
+    color: var(--text-secondary);
+    margin-bottom: 2rem;
+  }
+  
+  .browse-link {
+    display: inline-block;
+    padding: 0.8rem 1.6rem;
+    background: var(--primary-color);
+    color: white;
+    text-decoration: none;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+  }
+  
+  .browse-link:hover {
+    background: var(--accent-color);
+    transform: translateY(-2px);
+  }
+  
+  .crypto-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.5rem;
+    margin-top: 2rem;
+  }
+  
+  @media (max-width: 768px) {
+    .favorites-list {
+      padding: 1rem;
+    }
+  
+    .crypto-grid {
+      grid-template-columns: 1fr;
+    }
+  }
