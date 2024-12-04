@@ -3,10 +3,10 @@ import { sanitizeCryptoData, sanitizeCoinDetails } from '../utils/dataTransform'
 
 const BASE_URL = 'https://api.coingecko.com/api/v3';
 
-export const getTopCryptos = async () => {
+export const getTopCryptos = async (page = 1, perPage = 50) => {
   try {
     const response = await axios.get(
-      `${BASE_URL}/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=50&sparkline=true`
+      `${BASE_URL}/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=${perPage}&page=${page}&sparkline=true`
     );
     return sanitizeCryptoData(response.data);
   } catch (error) {

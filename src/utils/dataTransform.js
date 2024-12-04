@@ -1,4 +1,3 @@
-// Utility functions to safely transform data for serialization
 export const sanitizeCryptoData = (data) => {
     if (!Array.isArray(data)) return [];
     
