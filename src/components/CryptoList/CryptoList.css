@@ -1,61 +1,63 @@
 .crypto-list {
-    padding: 20px;
-    max-width: 1200px;
-    margin: 0 auto;
+  padding: 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.section-title {
+  font-size: 2rem;
+  font-weight: 700;
+  margin: 2rem 0;
+  color: var(--text-primary);
+  text-align: center;
+  letter-spacing: -0.5px;
+}
+
+.crypto-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 2rem;
+  margin-top: 2rem;
+}
+
+.loader-wrapper {
+  margin-top: 2rem;
+  padding: 2rem;
+  text-align: center;
+}
+
+.no-favorites {
+  text-align: center;
+  padding: 4rem 2rem;
+  background: var(--card-bg);
+  border-radius: 12px;
+  margin: 2rem auto;
+  max-width: 600px;
+  box-shadow: 0 4px 6px var(--shadow-color);
+}
+
+.no-favorites h3 {
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+  color: var(--text-primary);
+}
+
+.no-favorites p {
+  color: var(--text-secondary);
+}
+
+@media (max-width: 768px) {
+  .crypto-list {
+    padding: 1rem;
   }
-  
+
+  .section-title {
+    font-size: 1.5rem;
+    margin: 1.5rem 0;
+  }
+
   .crypto-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-    gap: 20px;
-    margin-top: 20px;
+    grid-template-columns: 1fr;
+    gap: 1rem;
   }
-  
-  .crypto-card {
-    background: #ffffff;
-    border-radius: 10px;
-    padding: 20px;
-    text-decoration: none;
-    color: #333;
-    transition: transform 0.2s;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-  }
-  
-  .crypto-card:hover {
-    transform: translateY(-5px);
-  }
-  
-  .crypto-logo {
-    width: 50px;
-    height: 50px;
-    margin-bottom: 10px;
-  }
-  
-  .crypto-symbol {
-    color: #666;
-    font-size: 0.9em;
-  }
-  
-  .crypto-price {
-    font-size: 1.2em;
-    font-weight: bold;
-    margin: 10px 0;
-  }
-  
-  .price-change {
-    font-weight: bold;
-  }
-  
-  .price-change.positive {
-    color: #4caf50;
-  }
-  
-  .price-change.negative {
-    color: #f44336;
-  }
-  
-  .loading {
-    text-align: center;
-    padding: 50px;
-    font-size: 1.2em;
-  }
+}

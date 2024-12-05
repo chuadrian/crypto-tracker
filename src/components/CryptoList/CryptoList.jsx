@@ -1,8 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
 import { getTopCryptos, searchCryptos } from '../../services/api';
-import SearchBar from '../SearchBar/SearchBar';
+import { useFavorites } from '../../hooks/useFavorites';
+import SearchHeader from '../SearchHeader/SearchHeader';
+import CryptoCard from '../CryptoCard/CryptoCard';
 import Loader from '../Loader/Loader';
 import './CryptoList.css';
 
@@ -10,15 +12,17 @@ function CryptoList() {
   const [cryptos, setCryptos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isSearching, setIsSearching] = useState(false);
+  const [showFavorites, setShowFavorites] = useState(false);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
+  const { favorites, toggleFavorite } = useFavorites();
   const { ref, inView } = useInView({
     threshold: 0,
     rootMargin: '100px',
   });
 
   const loadMoreCryptos = useCallback(async () => {
-    if (loading || !hasMore || isSearching) return;
+    if (loading || !hasMore || isSearching || showFavorites) return;
     
     setLoading(true);
     try {
@@ -35,7 +39,7 @@ function CryptoList() {
     } finally {
       setLoading(false);
     }
-  }, [page, loading, hasMore, isSearching]);
+  }, [page, loading, hasMore, isSearching, showFavorites]);
 
   useEffect(() => {
     const initialLoad = async () => {
@@ -50,18 +54,21 @@ function CryptoList() {
       }
     };
 
-    initialLoad();
-  }, []);
+    if (!showFavorites) {
+      initialLoad();
+    }
+  }, [showFavorites]);
 
   useEffect(() => {
-    if (inView && !isSearching && hasMore && !loading) {
+    if (inView && !isSearching && hasMore && !loading && !showFavorites) {
       loadMoreCryptos();
     }
-  }, [inView, isSearching, hasMore, loading, loadMoreCryptos]);
+  }, [inView, isSearching, hasMore, loading, loadMoreCryptos, showFavorites]);
 
   const handleSearch = async (query) => {
     if (!query.trim()) {
       setIsSearching(false);
+      setShowFavorites(false);
       setCryptos([]);
       setPage(1);
       setHasMore(true);
@@ -72,6 +79,7 @@ function CryptoList() {
     }
 
     setIsSearching(true);
+    setShowFavorites(false);
     setLoading(true);
     try {
       const results = await searchCryptos(query);
@@ -86,6 +94,7 @@ function CryptoList() {
 
   const handleSuggestionSelect = async (coinId) => {
     setIsSearching(true);
+    setShowFavorites(false);
     setLoading(true);
     try {
       const results = await searchCryptos(coinId);
@@ -98,41 +107,72 @@ function CryptoList() {
     }
   };
 
+  const handleToggleFavorites = () => {
+    setShowFavorites(prev => !prev);
+    if (!showFavorites) {
+      setIsSearching(false);
+      const favoriteCryptos = cryptos.filter(crypto => favorites.includes(crypto.id));
+      setCryptos(favoriteCryptos);
+    } else {
+      setPage(1);
+      loadMoreCryptos();
+    }
+  };
+
+  const displayedCryptos = showFavorites
+    ? cryptos.filter(crypto => favorites.includes(crypto.id))
+    : cryptos;
+
   return (
-    <div className="crypto-list">
-      <SearchBar onSearch={handleSearch} onSuggestionSelect={handleSuggestionSelect} />
-      <h2>{isSearching ? 'Search Results' : 'Top Cryptocurrencies'}</h2>
+    <motion.div 
+      className="crypto-list"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+    >
+      <SearchHeader
+        showFavorites={showFavorites}
+        onToggleFavorites={handleToggleFavorites}
+        onSearch={handleSearch}
+        onSuggestionSelect={handleSuggestionSelect}
+      />
+      
+      <h2 className="section-title">
+        {showFavorites 
+          ? 'Favorite Cryptocurrencies' 
+          : isSearching 
+            ? 'Search Results' 
+            : 'Top Cryptocurrencies'}
+      </h2>
+      
       {loading && cryptos.length === 0 ? (
         <Loader />
       ) : (
         <>
           <div className="crypto-grid">
-            {cryptos.map((crypto) => (
-              <Link 
-                to={`/coin/${crypto.id}`} 
-                key={crypto.id} 
-                className="crypto-card"
-              >
-                <img src={crypto.image} alt={crypto.name} className="crypto-logo" />
-                <h3>{crypto.name}</h3>
-                <p className="crypto-symbol">{crypto.symbol.toUpperCase()}</p>
-                <p className="crypto-price">${crypto.current_price?.toLocaleString()}</p>
-                {crypto.price_change_percentage_24h && (
-                  <p className={`price-change ${crypto.price_change_percentage_24h > 0 ? 'positive' : 'negative'}`}>
-                    {crypto.price_change_percentage_24h.toFixed(2)}%
-                  </p>
-                )}
-              </Link>
+            {displayedCryptos.map((crypto) => (
+              <CryptoCard
+                key={`${crypto.id}-${crypto.symbol}`}
+                crypto={crypto}
+                isFavorite={favorites.includes(crypto.id)}
+                onToggleFavorite={toggleFavorite}
+              />
             ))}
           </div>
-          {!isSearching && hasMore && (
+          {!isSearching && !showFavorites && hasMore && (
             <div ref={ref} className="loader-wrapper">
               <Loader />
             </div>
           )}
+          {showFavorites && displayedCryptos.length === 0 && (
+            <div className="no-favorites">
+              <h3>No favorites yet</h3>
+              <p>Add some cryptocurrencies to your favorites list!</p>
+            </div>
+          )}
         </>
       )}
-    </div>
+    </motion.div>
   );
 }
 

@@ -1,4 +1,5 @@
 import Lottie from 'react-lottie';
+import { motion } from 'framer-motion';
 import animationData from './bitcoin-loader.json';
 import './Loader.css';
 
@@ -13,14 +14,20 @@ function Loader() {
   };
 
   return (
-    <div className="loader-container">
+    <motion.div 
+      className="loader-container"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+    >
       <Lottie 
         options={defaultOptions}
-        height={200}
-        width={200}
+        height={120}
+        width={120}
         isClickToPauseDisabled={true}
       />
-    </div>
+      <p className="loading-text">Loading cryptocurrencies...</p>
+    </motion.div>
   );
 }
 
