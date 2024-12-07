@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { Line } from 'react-chartjs-2';
-import { getCoinDetails } from '../../services/api';
+import { getCoinDetails, getCoinOHLC } from '../../services/api';
 import { useFavorites } from '../../hooks/useFavorites';
 import { useTelegram } from '../../hooks/useTelegram';
 import {
@@ -14,6 +14,7 @@ import {
   Tooltip,
   Legend
 } from 'chart.js';
+import 'chartjs-chart-financial';
 import './CoinDetail.css';
 
 ChartJS.register(
@@ -28,19 +29,23 @@ ChartJS.register(
 
 function CoinDetail() {
   const { coinId } = useParams();
-  const navigate = useNavigate();
   const [coin, setCoin] = useState(null);
+  const [priceData, setPriceData] = useState([]);
   const [loading, setLoading] = useState(true);
   const { favorites, toggleFavorite } = useFavorites();
   const { tg, isInTelegram } = useTelegram();
 
   useEffect(() => {
-    const fetchCoinDetails = async () => {
-      const data = await getCoinDetails(coinId);
-      setCoin(data);
+    const fetchData = async () => {
+      const [coinData, ohlc] = await Promise.all([
+        getCoinDetails(coinId),
+        getCoinOHLC(coinId)
+      ]);
+      setCoin(coinData);
+      setPriceData(ohlc);
       setLoading(false);
     };
-    fetchCoinDetails();
+    fetchData();
 
     if (isInTelegram) {
       tg.BackButton.show();
@@ -48,35 +53,60 @@ function CoinDetail() {
     }
   }, [coinId, tg, isInTelegram]);
 
-  useEffect(() => {
-    if (isInTelegram && coin) {
-      tg.MainButton.text = favorites.includes(coin.id) ? 'Remove from Favorites' : 'Add to Favorites';
-      tg.MainButton.show();
-      tg.MainButton.onClick(() => toggleFavorite(coin.id));
-
-      return () => {
-        tg.MainButton.hide();
-        tg.MainButton.offClick();
-      };
-    }
-  }, [coin, favorites, toggleFavorite, tg, isInTelegram]);
-
   if (loading) return <div className="loading">Loading...</div>;
   if (!coin) return <div className="error">Coin not found</div>;
 
   const chartData = {
-    labels: coin.market_data.sparkline_7d.price.map((_, index) => 
-      new Date(Date.now() - (6 - index) * 24 * 60 * 60 * 1000).toLocaleDateString()
-    ),
+    labels: priceData.map(data => new Date(data[0]).toLocaleDateString()),
     datasets: [
       {
-        label: 'Price (USD)',
-        data: coin.market_data.sparkline_7d.price,
+        label: 'Price',
+        data: priceData.map(data => data[4]), // Using closing price
         borderColor: '#2196f3',
         backgroundColor: 'rgba(33, 150, 243, 0.1)',
         fill: true,
+        tension: 0.4
+      }
+    ]
+  };
+
+  const chartOptions = {
+    responsive: true,
+    interaction: {
+      intersect: false,
+      mode: 'index'
+    },
+    plugins: {
+      tooltip: {
+        callbacks: {
+          label: (context) => {
+            const dataPoint = priceData[context.dataIndex];
+            return [
+              `Open: $${dataPoint[1].toFixed(2)}`,
+              `High: $${dataPoint[2].toFixed(2)}`,
+              `Low: $${dataPoint[3].toFixed(2)}`,
+              `Close: $${dataPoint[4].toFixed(2)}`
+            ];
+          }
+        }
+      }
+    },
+    scales: {
+      x: {
+        grid: {
+          display: false
+        }
       },
-    ],
+      y: {
+        position: 'right',
+        grid: {
+          color: 'rgba(0, 0, 0, 0.1)'
+        },
+        ticks: {
+          callback: (value) => `$${value.toLocaleString()}`
+        }
+      }
+    }
   };
 
   return (
@@ -112,15 +142,8 @@ function CoinDetail() {
       </div>
 
       <div className="chart-container">
-        <h2>7-Day Price History</h2>
-        <Line data={chartData} options={{
-          responsive: true,
-          plugins: {
-            legend: {
-              display: false
-            }
-          }
-        }} />
+        <h2>Price History</h2>
+        <Line data={chartData} options={chartOptions} />
       </div>
 
       <div className="coin-description">

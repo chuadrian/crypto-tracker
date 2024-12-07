@@ -5,6 +5,7 @@
     background: var(--bg-primary);
     padding: 1rem 0;
     border-bottom: 1px solid var(--border-color);
+    margin-top: 50px;
   }
   
   .search-container {

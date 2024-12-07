@@ -1,6 +1,9 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { FaSearch } from 'react-icons/fa';
-import debounce from 'debounce';
+import debounce from 'lodash.debounce';
+import { AnimatePresence } from 'framer-motion';
+import SearchInput from './SearchInput';
+import SearchSuggestions from './SearchSuggestions';
+import { fetchSearchSuggestions } from '../../services/api';
 import './SearchBar.css';
 
 function SearchBar({ onSearch, onSuggestionSelect }) {
@@ -17,11 +20,8 @@ function SearchBar({ onSearch, onSuggestionSelect }) {
       }
 
       try {
-        const response = await fetch(
-          `https://api.coingecko.com/api/v3/search?query=${encodeURIComponent(searchQuery)}`
-        );
-        const data = await response.json();
-        setSuggestions(data.coins.slice(0, 8));
+        const results = await fetchSearchSuggestions(searchQuery);
+        setSuggestions(results);
       } catch (error) {
         console.error('Error fetching suggestions:', error);
         setSuggestions([]);
@@ -54,7 +54,7 @@ function SearchBar({ onSearch, onSuggestionSelect }) {
     onSearch(query.trim());
   };
 
-  const handleSuggestionClick = (coinId) => {
+  const handleSuggestionSelect = (coinId) => {
     setShowSuggestions(false);
     setQuery('');
     onSuggestionSelect(coinId);
@@ -62,35 +62,20 @@ function SearchBar({ onSearch, onSuggestionSelect }) {
 
   return (
     <div className="search-container" ref={searchRef}>
-      <form className="search-bar" onSubmit={handleSubmit}>
-        <FaSearch className="search-icon" />
-        <input
-          type="text"
-          placeholder="Search cryptocurrencies..."
-          value={query}
-          onChange={handleChange}
-          className="search-input"
-          onFocus={() => setShowSuggestions(true)}
-        />
-      </form>
+      <SearchInput
+        value={query}
+        onChange={handleChange}
+        onSubmit={handleSubmit}
+      />
       
-      {showSuggestions && suggestions.length > 0 && (
-        <div className="suggestions-container">
-          {suggestions.map((coin) => (
-            <div
-              key={coin.id}
-              className="suggestion-item"
-              onClick={() => handleSuggestionClick(coin.id)}
-            >
-              <img src={coin.thumb} alt={coin.name} className="suggestion-thumb" />
-              <div className="suggestion-info">
-                <span className="suggestion-name">{coin.name}</span>
-                <span className="suggestion-symbol">{coin.symbol.toUpperCase()}</span>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
+      <AnimatePresence>
+        {showSuggestions && (
+          <SearchSuggestions
+            suggestions={suggestions}
+            onSelect={handleSuggestionSelect}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }
