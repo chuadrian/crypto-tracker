@@ -1,50 +1,49 @@
 import { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
-import { Line } from 'react-chartjs-2';
+import { useParams, useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { getCoinDetails, getCoinOHLC } from '../../services/api';
 import { useFavorites } from '../../hooks/useFavorites';
 import { useTelegram } from '../../hooks/useTelegram';
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip,
-  Legend
-} from 'chart.js';
-import 'chartjs-chart-financial';
+import Loader from '../Loader/Loader';
 import './CoinDetail.css';
-
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip,
-  Legend
-);
+import CandlestickChart from './CandlestickChart';
 
 function CoinDetail() {
   const { coinId } = useParams();
+  const navigate = useNavigate();
   const [coin, setCoin] = useState(null);
   const [priceData, setPriceData] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const { favorites, toggleFavorite } = useFavorites();
   const { tg, isInTelegram } = useTelegram();
 
   useEffect(() => {
     const fetchData = async () => {
-      const [coinData, ohlc] = await Promise.all([
-        getCoinDetails(coinId),
-        getCoinOHLC(coinId)
-      ]);
-      setCoin(coinData);
-      setPriceData(ohlc);
-      setLoading(false);
+      try {
+        setLoading(true);
+        setError(null);
+        
+        const [coinData, ohlc] = await Promise.all([
+          getCoinDetails(coinId),
+          getCoinOHLC(coinId)
+        ]);
+
+        if (!coinData) {
+          setError('Cryptocurrency not found');
+          return;
+        }
+
+        setCoin(coinData);
+        setPriceData(ohlc);
+      } catch (error) {
+        setError(error.message || 'Failed to load cryptocurrency data');
+        console.error('Error fetching data:', error);
+      } finally {
+        setLoading(false);
+      }
     };
+
     fetchData();
 
     if (isInTelegram) {
@@ -53,64 +52,53 @@ function CoinDetail() {
     }
   }, [coinId, tg, isInTelegram]);
 
-  if (loading) return <div className="loading">Loading...</div>;
-  if (!coin) return <div className="error">Coin not found</div>;
+  if (loading) {
+    return (
+      <div className="coin-detail-loader">
+        <Loader />
+      </div>
+    );
+  }
 
-  const chartData = {
-    labels: priceData.map(data => new Date(data[0]).toLocaleDateString()),
-    datasets: [
-      {
-        label: 'Price',
-        data: priceData.map(data => data[4]), // Using closing price
-        borderColor: '#2196f3',
-        backgroundColor: 'rgba(33, 150, 243, 0.1)',
-        fill: true,
-        tension: 0.4
-      }
-    ]
-  };
+  if (error) {
+    return (
+      <motion.div 
+        className="coin-detail-error"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+      >
+        <h2>Oops! Something went wrong</h2>
+        <p>{error}</p>
+        <button onClick={() => navigate('/')} className="back-button">
+          Return to Home
+        </button>
+      </motion.div>
+    );
+  }
 
-  const chartOptions = {
-    responsive: true,
-    interaction: {
-      intersect: false,
-      mode: 'index'
-    },
-    plugins: {
-      tooltip: {
-        callbacks: {
-          label: (context) => {
-            const dataPoint = priceData[context.dataIndex];
-            return [
-              `Open: $${dataPoint[1].toFixed(2)}`,
-              `High: $${dataPoint[2].toFixed(2)}`,
-              `Low: $${dataPoint[3].toFixed(2)}`,
-              `Close: $${dataPoint[4].toFixed(2)}`
-            ];
-          }
-        }
-      }
-    },
-    scales: {
-      x: {
-        grid: {
-          display: false
-        }
-      },
-      y: {
-        position: 'right',
-        grid: {
-          color: 'rgba(0, 0, 0, 0.1)'
-        },
-        ticks: {
-          callback: (value) => `$${value.toLocaleString()}`
-        }
-      }
-    }
-  };
+  if (!coin) {
+    return (
+      <motion.div 
+        className="coin-detail-not-found"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+      >
+        <h2>Cryptocurrency Not Found</h2>
+        <p>The cryptocurrency you're looking for doesn't exist or has been delisted.</p>
+        <button onClick={() => navigate('/')} className="back-button">
+          Return to Home
+        </button>
+      </motion.div>
+    );
+  }
 
   return (
-    <div className="coin-detail">
+    <motion.div 
+      className="coin-detail"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+    >
       <div className="coin-header">
         <img src={coin.image.large} alt={coin.name} className="coin-logo" />
         <h1>{coin.name}</h1>
@@ -143,14 +131,14 @@ function CoinDetail() {
 
       <div className="chart-container">
         <h2>Price History</h2>
-        <Line data={chartData} options={chartOptions} />
+        <CandlestickChart data={priceData} />
       </div>
 
       <div className="coin-description">
         <h2>About {coin.name}</h2>
         <p dangerouslySetInnerHTML={{ __html: coin.description.en }}></p>
       </div>
-    </div>
+    </motion.div>
   );
 }
 
