@@ -3,7 +3,7 @@ import { sanitizeCryptoData, sanitizeCoinDetails } from '../utils/dataTransform'
 
 const BASE_URL = 'https://api.coingecko.com/api/v3';
 const CRYPTO_PANIC_URL = 'https://cryptopanic.com/api/v1/posts';
-const CRYPTO_PANIC_KEY = 'your_api_key'; // You'll need to sign up for a free API key
+const CRYPTO_PANIC_KEY = '0fe663c8dccbf1ac86a18f474a8e023cdf5b51fa'; 
 
 const axiosInstance = axios.create({
   baseURL: BASE_URL,
